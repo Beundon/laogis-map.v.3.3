@@ -55,7 +55,7 @@
             height: 100vh;
         }
 
-        /* Loading Screen */
+        /* Loading Screen - FAST & RELIABLE */
         #loader {
             position: fixed;
             inset: 0;
@@ -65,7 +65,7 @@
             align-items: center;
             justify-content: center;
             z-index: 99999;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.3s ease;
         }
 
         .loader-logo {
@@ -123,7 +123,6 @@
         #app {
             display: none;
             height: 100vh;
-            display: flex;
             flex-direction: column;
         }
 
@@ -479,6 +478,11 @@
         .measure-item-type.area {
             background: rgba(245, 158, 11, 0.15);
             color: var(--measure-active);
+        }
+
+        .measure-item-type.coordinate {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
         }
 
         .measure-item-value {
@@ -1282,17 +1286,14 @@
                     <button class="tool-btn" id="btnMeasureDistance" onclick="toggleMeasureMode('distance')" title="Measure Distance (M)">
                         <span class="tool-icon">📏</span>
                         <span class="tool-text">Distance</span>
-                        <span class="tool-badge">1</span>
                     </button>
                     <button class="tool-btn" id="btnMeasureArea" onclick="toggleMeasureMode('area')" title="Measure Area (A)">
                         <span class="tool-icon">📐</span>
                         <span class="tool-text">Area</span>
-                        <span class="tool-badge">2</span>
                     </button>
                     <button class="tool-btn" id="btnMeasureCoord" onclick="toggleMeasureMode('coordinate')" title="Coordinate Pick (C)">
                         <span class="tool-icon">📍</span>
                         <span class="tool-text">Pick XY</span>
-                        <span class="tool-badge">3</span>
                     </button>
                 </div>
 
@@ -1726,7 +1727,7 @@
         // Measurement State
         let measureMode = {
             active: false,
-            type: null, // 'distance', 'area', 'coordinate'
+            type: null,
             points: [],
             polyline: null,
             polygon: null,
@@ -1737,22 +1738,56 @@
         let measureHistory = [];
 
         // ============================================
-        // FAST INITIALIZATION
+        // RELIABLE FAST INITIALIZATION - NO HANG
         // ============================================
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                document.getElementById('loader').style.opacity = '0';
+        
+        // Method 1: Try immediate init if DOM already ready
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(initApp, 1);
+        } else {
+            // Method 2: Wait for DOMContentLoaded
+            document.addEventListener('DOMContentLoaded', initApp);
+        }
+        
+        // Method 3: Fallback - force hide loader after max 2 seconds no matter what
+        setTimeout(forceHideLoader, 2000);
+
+        function forceHideLoader() {
+            const loader = document.getElementById('loader');
+            const app = document.getElementById('app');
+            if (loader && loader.style.display !== 'none') {
+                loader.style.opacity = '0';
                 setTimeout(() => {
-                    document.getElementById('loader').style.display = 'none';
-                    initApp();
-                }, 400);
-            }, 800);
-        });
+                    loader.style.display = 'none';
+                    if (app) {
+                        app.style.display = 'flex';
+                        if (!map) initMap();
+                    }
+                }, 300);
+            }
+        }
 
         function initApp() {
+            // Show app container
+            const app = document.getElementById('app');
+            if (app) app.style.display = 'flex';
+            
+            // Initialize map immediately
             initMap();
+            
+            // Setup other features
             initDragDrop();
             setupContextMenu();
+            
+            // Hide loader with smooth fade
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 300);
+            }
+            
             showToast('success', 'Ready', 'Laos GIS Mapper loaded. Use toolbar to measure distance/area or pick coordinates.');
         }
 
@@ -1760,11 +1795,12 @@
         // MAP INITIALIZATION
         // ============================================
         function initMap() {
+            // Prevent double init
+            if (map) return;
+            
             map = L.map('map', {
                 zoomControl: false,
-                attributionControl: false,
-                contextmenu: true,
-                contextmenuWidth: 180
+                attributionControl: false
             }).setView(LAOS_CENTER, DEFAULT_ZOOM);
 
             L.control.zoom({ position: 'topright' }).addTo(map);
@@ -1792,7 +1828,7 @@
             drawnItems = new L.FeatureGroup();
             map.addLayer(drawnItems);
 
-            // Leaflet Draw controls
+            // Leaflet Draw controls (disabled by default, we use custom measurement)
             const drawControl = new L.Control.Draw({
                 draw: {
                     polyline: false,
@@ -1815,7 +1851,6 @@
                 document.getElementById('lng').textContent = e.latlng.lng.toFixed(6);
                 document.getElementById('zoom').textContent = map.getZoom();
                 
-                // Update measurement if active
                 if (measureMode.active && measureMode.points.length > 0) {
                     updateMeasureLive(e.latlng);
                 }
@@ -1866,18 +1901,15 @@
                 return;
             }
             
-            // Cancel any existing measure
             cancelMeasure();
             
             measureMode.active = true;
             measureMode.type = type;
             measureMode.points = [];
             
-            // Update UI
             document.getElementById('measureSection').style.display = 'block';
             document.getElementById('measureOverlay').classList.add('visible');
             
-            // Update toolbar buttons
             document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
             if (type === 'distance') {
                 document.getElementById('btnMeasureDistance').classList.add('active');
@@ -1890,7 +1922,6 @@
                 showToast('info', 'Coordinate Pick', 'Click anywhere on map to capture coordinates.');
             }
             
-            // Configure display boxes
             const boxMeters = document.getElementById('boxMeters');
             const boxKm = document.getElementById('boxKilometers');
             const boxSqM = document.getElementById('boxSqMeters');
@@ -1933,7 +1964,6 @@
                 document.getElementById('overlayDivider2').style.display = 'none';
             }
             
-            // Reset values
             document.getElementById('valMeters').textContent = '0.00';
             document.getElementById('valKilometers').textContent = '0.0000';
             document.getElementById('valSqMeters').textContent = '0.00';
@@ -1943,7 +1973,6 @@
             document.getElementById('overlayPrimary').textContent = type === 'coordinate' ? '--' : '0.00';
             document.getElementById('overlaySecondary').textContent = type === 'coordinate' ? '--' : '0.0000';
             
-            // Change cursor
             map.getContainer().style.cursor = 'crosshair';
         }
 
@@ -1956,19 +1985,16 @@
             if (!measureMode.active) return;
             
             if (measureMode.type === 'coordinate') {
-                // Single click for coordinate pick
                 document.getElementById('valLat').textContent = latlng.lat.toFixed(6);
                 document.getElementById('valLng').textContent = latlng.lng.toFixed(6);
                 document.getElementById('overlayPrimary').textContent = latlng.lat.toFixed(6);
                 document.getElementById('overlaySecondary').textContent = latlng.lng.toFixed(6);
                 
-                // Add to history
                 addMeasureToHistory('coordinate', `Lat: ${latlng.lat.toFixed(6)}, Lng: ${latlng.lng.toFixed(6)}`, null);
                 
-                // Add marker
                 const marker = L.circleMarker(latlng, {
                     radius: 8,
-                    fillColor: var(--measure-active),
+                    fillColor: '#f59e0b',
                     color: '#fff',
                     weight: 3,
                     fillOpacity: 1
@@ -1979,17 +2005,14 @@
                 return;
             }
             
-            // Add vertex for distance/area
             measureMode.points.push(latlng);
             
-            // Add vertex marker
             const vertex = L.circleMarker(latlng, {
                 radius: 6,
                 fillColor: '#f59e0b',
                 color: '#fff',
                 weight: 2,
-                fillOpacity: 1,
-                className: 'measure-vertex'
+                fillOpacity: 1
             }).addTo(map);
             vertex.bindTooltip((measureMode.points.length).toString(), {
                 permanent: true,
@@ -1999,17 +2022,13 @@
             });
             measureMode.vertexMarkers.push(vertex);
             
-            // Update line/polygon
             updateMeasureGeometry();
-            
-            // Calculate and display
             calculateMeasure();
         }
 
         function updateMeasureLive(latlng) {
             if (measureMode.points.length === 0) return;
             
-            // Update temp line from last point to cursor
             const lastPoint = measureMode.points[measureMode.points.length - 1];
             
             if (measureMode.tempLine) {
@@ -2023,7 +2042,6 @@
                 dashArray: '5, 10'
             }).addTo(map);
             
-            // Calculate live distance
             if (measureMode.type === 'distance') {
                 const tempPoints = [...measureMode.points, latlng];
                 const line = turf.lineString(tempPoints.map(p => [p.lng, p.lat]));
@@ -2035,7 +2053,6 @@
                 document.getElementById('overlaySecondary').textContent = (length / 1000).toFixed(4);
             } else if (measureMode.type === 'area' && measureMode.points.length >= 2) {
                 const tempPoints = [...measureMode.points, latlng];
-                // Close polygon for area calc
                 if (tempPoints.length >= 3) {
                     const closed = [...tempPoints, tempPoints[0]];
                     const polygon = turf.polygon([closed.map(p => [p.lng, p.lat])]);
@@ -2050,7 +2067,6 @@
         }
 
         function updateMeasureGeometry() {
-            // Remove old
             if (measureMode.polyline) {
                 map.removeLayer(measureMode.polyline);
             }
@@ -2108,7 +2124,6 @@
             
             measureMode.points.pop();
             
-            // Remove last vertex
             const lastVertex = measureMode.vertexMarkers.pop();
             if (lastVertex) map.removeLayer(lastVertex);
             
@@ -2145,13 +2160,11 @@
                 showToast('success', 'Area Measured', label);
             }
             
-            // Keep geometry on map but clean up temp elements
             if (measureMode.tempLine) {
                 map.removeLayer(measureMode.tempLine);
                 measureMode.tempLine = null;
             }
             
-            // Reset mode but keep results visible
             measureMode.active = false;
             measureMode.type = null;
             measureMode.points = [];
@@ -2168,7 +2181,6 @@
         function cancelMeasure() {
             if (!measureMode.active && measureMode.vertexMarkers.length === 0) return;
             
-            // Clean up all measurement elements
             if (measureMode.tempLine) {
                 map.removeLayer(measureMode.tempLine);
             }
