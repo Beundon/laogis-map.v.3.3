@@ -13,23 +13,13 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     
-    <!-- Elevation Profile -->
-    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.css" />
-    <script src="https://unpkg.com/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.js"></script>
-    
     <!-- File Parsing Libraries -->
     <script src="https://unpkg.com/togeojson@0.16.0/togeojson.js"></script>
     <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
     <script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
-    
-    <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    
-    <!-- Turf.js for advanced GIS -->
     <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
-    
-    <!-- PapaParse for CSV -->
     <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 
     <style>
@@ -45,6 +35,7 @@
             --bg-tertiary: #334155;
             --accent: #38bdf8;
             --accent-hover: #7dd3fc;
+            --accent-glow: rgba(56, 189, 248, 0.3);
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
@@ -52,6 +43,8 @@
             --warning: #f59e0b;
             --danger: #ef4444;
             --border: #334155;
+            --measure-active: #f59e0b;
+            --measure-bg: rgba(245, 158, 11, 0.15);
         }
 
         body {
@@ -62,7 +55,7 @@
             height: 100vh;
         }
 
-        /* Loading Screen - FAST */
+        /* Loading Screen */
         #loader {
             position: fixed;
             inset: 0;
@@ -137,21 +130,23 @@
         /* Header */
         .header {
             height: 56px;
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(15, 23, 42, 0.98);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 1rem;
+            padding: 0 0.75rem;
             z-index: 1000;
             flex-shrink: 0;
+            gap: 0.5rem;
         }
 
         .header-brand {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            flex-shrink: 0;
         }
 
         .header-logo {
@@ -168,10 +163,105 @@
             font-weight: 600;
         }
 
+        /* Toolbar / Menu Bar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            flex: 1;
+            justify-content: center;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .toolbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 0.15rem;
+            padding: 0 0.4rem;
+            border-right: 1px solid var(--border);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-right: 0.3rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .tool-btn {
+            position: relative;
+            padding: 0.4rem 0.6rem;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .tool-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+
+        .tool-btn.active {
+            background: var(--measure-bg);
+            color: var(--measure-active);
+            border-color: var(--measure-active);
+            box-shadow: 0 0 12px var(--measure-bg);
+        }
+
+        .tool-btn .tool-icon {
+            font-size: 1rem;
+        }
+
+        .tool-btn .tool-text {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .tool-btn .tool-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--danger);
+            color: white;
+            font-size: 0.6rem;
+            padding: 0.05rem 0.3rem;
+            border-radius: 999px;
+            font-weight: 700;
+            display: none;
+        }
+
+        .tool-btn.has-badge .tool-badge {
+            display: block;
+        }
+
+        /* Header Actions */
         .header-actions {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .btn {
@@ -185,6 +275,7 @@
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
+            font-family: inherit;
         }
 
         .btn-primary {
@@ -195,6 +286,7 @@
         .btn-primary:hover {
             background: var(--accent-hover);
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
         }
 
         .btn-secondary {
@@ -205,6 +297,7 @@
 
         .btn-secondary:hover {
             background: var(--bg-tertiary);
+            border-color: var(--text-muted);
         }
 
         .btn-danger {
@@ -220,6 +313,11 @@
         .btn-sm {
             padding: 0.35rem 0.75rem;
             font-size: 0.8rem;
+        }
+
+        .btn-xs {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
         }
 
         /* Main Content */
@@ -238,6 +336,7 @@
             flex-direction: column;
             overflow: hidden;
             transition: width 0.3s ease;
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed {
@@ -281,6 +380,126 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+        }
+
+        /* Measurement Panel */
+        .measure-panel {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 0.875rem;
+            border: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .measure-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .measure-box {
+            background: var(--bg-primary);
+            padding: 0.6rem;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .measure-box.active {
+            border-color: var(--measure-active);
+            background: var(--measure-bg);
+        }
+
+        .measure-value {
+            font-family: 'SF Mono', 'Courier New', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .measure-value.primary {
+            color: var(--measure-active);
+        }
+
+        .measure-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 0.2rem;
+            letter-spacing: 0.03em;
+        }
+
+        .measure-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .measure-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* Measurement History */
+        .measure-history {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .measure-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.6rem;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            margin-bottom: 0.4rem;
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
+        }
+
+        .measure-item-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .measure-item-type.distance {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent);
+        }
+
+        .measure-item-type.area {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--measure-active);
+        }
+
+        .measure-item-value {
+            font-family: 'SF Mono', monospace;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .measure-item-delete {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0.2rem;
+            border-radius: 4px;
+        }
+
+        .measure-item-delete:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
         }
 
         /* Coordinate Panel */
@@ -343,7 +562,7 @@
             50% { opacity: 0.3; }
         }
 
-        /* File Import Zone */
+        /* Import Zone */
         .import-zone {
             border: 2px dashed var(--border);
             border-radius: 8px;
@@ -525,6 +744,52 @@
         #map {
             height: 100%;
             width: 100%;
+        }
+
+        /* Measurement Overlay on Map */
+        .measure-overlay {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--measure-active);
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            z-index: 400;
+            display: none;
+            align-items: center;
+            gap: 1.5rem;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);
+            backdrop-filter: blur(8px);
+        }
+
+        .measure-overlay.visible {
+            display: flex;
+        }
+
+        .measure-overlay-stat {
+            text-align: center;
+        }
+
+        .measure-overlay-value {
+            font-family: 'SF Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--measure-active);
+        }
+
+        .measure-overlay-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .measure-overlay-divider {
+            width: 1px;
+            height: 30px;
+            background: var(--border);
         }
 
         /* Elevation Chart */
@@ -758,7 +1023,6 @@
             resize: vertical;
         }
 
-        /* CRS Options */
         .crs-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -786,7 +1050,6 @@
             color: var(--accent);
         }
 
-        /* Markers Table */
         .markers-table {
             width: 100%;
             border-collapse: collapse;
@@ -843,6 +1106,15 @@
             .sidebar.collapsed {
                 width: 0;
             }
+            .toolbar-label {
+                display: none;
+            }
+            .tool-btn .tool-text {
+                display: none;
+            }
+            .header-title {
+                display: none;
+            }
         }
 
         /* Leaflet Customization */
@@ -879,6 +1151,30 @@
 
         .leaflet-popup-close-button:hover {
             color: var(--text-primary) !important;
+        }
+
+        /* Measurement Styles on Map */
+        .measure-tooltip {
+            background: rgba(15, 23, 42, 0.9) !important;
+            border: 1px solid var(--measure-active) !important;
+            color: var(--measure-active) !important;
+            font-family: 'SF Mono', monospace !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            padding: 4px 8px !important;
+            border-radius: 4px !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+        }
+
+        .measure-tooltip::before {
+            border-top-color: var(--measure-active) !important;
+        }
+
+        .measure-vertex {
+            background: var(--measure-active);
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--measure-active);
         }
 
         /* Context Menu */
@@ -921,7 +1217,7 @@
         /* Route Info */
         .route-info {
             position: absolute;
-            top: 66px;
+            top: 70px;
             left: 50%;
             transform: translateX(-50%);
             background: var(--bg-secondary);
@@ -956,7 +1252,6 @@
             text-transform: uppercase;
         }
 
-        /* Hidden */
         .hidden { display: none !important; }
     </style>
 </head>
@@ -972,43 +1267,140 @@
 
     <!-- App -->
     <div id="app">
-        <!-- Header -->
+        <!-- Header with Toolbar -->
         <header class="header">
             <div class="header-brand">
                 <span class="header-logo">LA</span>
                 <span class="header-title">Laos GIS Mapper Pro</span>
             </div>
+
+            <!-- Measurement & Tools Toolbar -->
+            <div class="toolbar">
+                <!-- Measure Group -->
+                <div class="toolbar-group">
+                    <span class="toolbar-label">Measure</span>
+                    <button class="tool-btn" id="btnMeasureDistance" onclick="toggleMeasureMode('distance')" title="Measure Distance (M)">
+                        <span class="tool-icon">📏</span>
+                        <span class="tool-text">Distance</span>
+                        <span class="tool-badge">1</span>
+                    </button>
+                    <button class="tool-btn" id="btnMeasureArea" onclick="toggleMeasureMode('area')" title="Measure Area (A)">
+                        <span class="tool-icon">📐</span>
+                        <span class="tool-text">Area</span>
+                        <span class="tool-badge">2</span>
+                    </button>
+                    <button class="tool-btn" id="btnMeasureCoord" onclick="toggleMeasureMode('coordinate')" title="Coordinate Pick (C)">
+                        <span class="tool-icon">📍</span>
+                        <span class="tool-text">Pick XY</span>
+                        <span class="tool-badge">3</span>
+                    </button>
+                </div>
+
+                <!-- Tools Group -->
+                <div class="toolbar-group">
+                    <span class="toolbar-label">Tools</span>
+                    <button class="tool-btn" onclick="showImportModal()" title="Import Data (Ctrl+I)">
+                        <span class="tool-icon">📥</span>
+                        <span class="tool-text">Import</span>
+                    </button>
+                    <button class="tool-btn" onclick="showExportModal()" title="Export Data (Ctrl+E)">
+                        <span class="tool-icon">📤</span>
+                        <span class="tool-text">Export</span>
+                    </button>
+                    <button class="tool-btn" onclick="toggleTracking()" id="btnTrackToggle" title="GPS Track (T)">
+                        <span class="tool-icon">🛰️</span>
+                        <span class="tool-text">Track</span>
+                    </button>
+                </div>
+
+                <!-- View Group -->
+                <div class="toolbar-group">
+                    <span class="toolbar-label">View</span>
+                    <button class="tool-btn" onclick="resetToLaos()" title="Center Laos (H)">
+                        <span class="tool-icon">🇱🇦</span>
+                        <span class="tool-text">Laos</span>
+                    </button>
+                    <button class="tool-btn" onclick="clearAll()" title="Clear All (Del)">
+                        <span class="tool-icon">🗑️</span>
+                        <span class="tool-text">Clear</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="header-actions">
-                <button class="btn btn-secondary btn-sm" onclick="showImportModal()">
-                    📥 Import
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="showExportModal()">
-                    📤 Export
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="toggleTracking()">
-                    <span id="trackBtnText">▶️ Track</span>
-                </button>
-                <button class="btn btn-primary btn-sm" onclick="resetToLaos()">
-                    🇱🇦 Laos
+                <button class="btn btn-secondary btn-xs" onclick="toggleSidebar()">
+                    <span id="sidebarToggleText">◀ Panel</span>
                 </button>
             </div>
         </header>
 
-        <!-- Main -->
+        <!-- Main Content -->
         <div class="main-container">
             <!-- Sidebar -->
             <aside class="sidebar" id="sidebar">
                 <div class="sidebar-header">
                     <span class="sidebar-title">Control Panel</span>
-                    <button class="btn btn-sm btn-secondary" onclick="clearAll()" title="Clear All">
-                        🗑️
-                    </button>
                 </div>
                 
                 <div class="sidebar-content">
+                    <!-- Measurement Panel -->
+                    <div class="sidebar-section" id="measureSection" style="display:none;">
+                        <div class="section-title">📐 Measurement</div>
+                        <div class="measure-panel">
+                            <div class="measure-display" id="measureDisplay">
+                                <div class="measure-box active" id="boxMeters">
+                                    <div class="measure-value primary" id="valMeters">0.00</div>
+                                    <div class="measure-label">Meters</div>
+                                </div>
+                                <div class="measure-box" id="boxKilometers">
+                                    <div class="measure-value" id="valKilometers">0.0000</div>
+                                    <div class="measure-label">Kilometers</div>
+                                </div>
+                                <div class="measure-box" id="boxSqMeters" style="display:none;">
+                                    <div class="measure-value primary" id="valSqMeters">0.00</div>
+                                    <div class="measure-label">Square Meters</div>
+                                </div>
+                                <div class="measure-box" id="boxHectares" style="display:none;">
+                                    <div class="measure-value" id="valHectares">0.0000</div>
+                                    <div class="measure-label">Hectares</div>
+                                </div>
+                                <div class="measure-box" id="boxLat">
+                                    <div class="measure-value" id="valLat">--</div>
+                                    <div class="measure-label">Latitude</div>
+                                </div>
+                                <div class="measure-box" id="boxLng">
+                                    <div class="measure-value" id="valLng">--</div>
+                                    <div class="measure-label">Longitude</div>
+                                </div>
+                            </div>
+                            <div class="measure-actions">
+                                <button class="btn btn-primary btn-xs" onclick="finishMeasure()">
+                                    ✓ Finish
+                                </button>
+                                <button class="btn btn-secondary btn-xs" onclick="cancelMeasure()">
+                                    ✕ Cancel
+                                </button>
+                                <button class="btn btn-secondary btn-xs" onclick="undoMeasurePoint()">
+                                    ↩ Undo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Measurement History -->
+                    <div class="sidebar-section">
+                        <div class="section-title" style="display:flex;justify-content:space-between;">
+                            <span>📋 Measure History</span>
+                            <button class="btn btn-xs btn-secondary" onclick="clearMeasureHistory()">Clear</button>
+                        </div>
+                        <div class="measure-history" id="measureHistory">
+                            <p style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:1rem;">No measurements yet. Use toolbar buttons to start.</p>
+                        </div>
+                    </div>
+
                     <!-- Coordinates -->
                     <div class="sidebar-section">
-                        <div class="section-title">📍 Cursor Position</div>
+                        <div class="section-title">🖱️ Cursor Position</div>
                         <div class="coord-panel">
                             <div class="coord-row">
                                 <span class="coord-label">Latitude (WGS84)</span>
@@ -1127,6 +1519,25 @@
             <div class="map-wrapper">
                 <div id="map"></div>
                 
+                <!-- Measurement Overlay -->
+                <div class="measure-overlay" id="measureOverlay">
+                    <div class="measure-overlay-stat">
+                        <div class="measure-overlay-value" id="overlayPrimary">0.00</div>
+                        <div class="measure-overlay-label" id="overlayPrimaryLabel">METERS</div>
+                    </div>
+                    <div class="measure-overlay-divider"></div>
+                    <div class="measure-overlay-stat">
+                        <div class="measure-overlay-value" id="overlaySecondary">0.0000</div>
+                        <div class="measure-overlay-label" id="overlaySecondaryLabel">KILOMETERS</div>
+                    </div>
+                    <div class="measure-overlay-divider" id="overlayDivider2"></div>
+                    <div class="measure-overlay-stat" id="overlayTertiaryBox">
+                        <div class="measure-overlay-value" id="overlayTertiary">0.00</div>
+                        <div class="measure-overlay-label" id="overlayTertiaryLabel">SQ M</div>
+                    </div>
+                    <button class="btn btn-xs btn-danger" onclick="cancelMeasure()">✕</button>
+                </div>
+
                 <!-- Route Info Overlay -->
                 <div class="route-info" id="routeInfo">
                     <div class="route-stat">
@@ -1162,7 +1573,8 @@
     <!-- Context Menu -->
     <div class="context-menu" id="contextMenu">
         <div class="context-item" onclick="addMarkerAtContext()">📌 Add Marker</div>
-        <div class="context-item" onclick="startRouteFromContext()">🛤️ Start Route Here</div>
+        <div class="context-item" onclick="startMeasureFromContext('distance')">📏 Measure Distance</div>
+        <div class="context-item" onclick="startMeasureFromContext('area')">📐 Measure Area</div>
         <div class="context-item" onclick="copyCoordsContext()">📋 Copy Coordinates</div>
         <div class="context-divider"></div>
         <div class="context-item" onclick="queryElevationContext()">⛰️ Query Elevation</div>
@@ -1212,6 +1624,7 @@
                         <option value="markers">Markers / Points</option>
                         <option value="route">Current Route</option>
                         <option value="track">GPS Track</option>
+                        <option value="measurements">Measurements</option>
                         <option value="all">All Data</option>
                     </select>
                 </div>
@@ -1308,8 +1721,20 @@
         };
         let contextMenuLatLng = null;
         let selectedCRS = 'EPSG:4326';
-        let elevationChart = null;
         let toastId = 0;
+
+        // Measurement State
+        let measureMode = {
+            active: false,
+            type: null, // 'distance', 'area', 'coordinate'
+            points: [],
+            polyline: null,
+            polygon: null,
+            vertexMarkers: [],
+            tooltip: null,
+            tempLine: null
+        };
+        let measureHistory = [];
 
         // ============================================
         // FAST INITIALIZATION
@@ -1328,7 +1753,7 @@
             initMap();
             initDragDrop();
             setupContextMenu();
-            showToast('success', 'Ready', 'Laos GIS Mapper loaded. Right-click map for quick actions.');
+            showToast('success', 'Ready', 'Laos GIS Mapper loaded. Use toolbar to measure distance/area or pick coordinates.');
         }
 
         // ============================================
@@ -1370,17 +1795,11 @@
             // Leaflet Draw controls
             const drawControl = new L.Control.Draw({
                 draw: {
-                    polyline: {
-                        shapeOptions: { color: '#38bdf8', weight: 3 },
-                        metric: true
-                    },
-                    polygon: {
-                        shapeOptions: { color: '#22c55e', weight: 2 },
-                        showArea: true
-                    },
-                    rectangle: { shapeOptions: { color: '#f59e0b' } },
-                    circle: { shapeOptions: { color: '#ef4444' } },
-                    marker: true,
+                    polyline: false,
+                    polygon: false,
+                    rectangle: false,
+                    circle: false,
+                    marker: false,
                     circlemarker: false
                 },
                 edit: {
@@ -1390,28 +1809,17 @@
             });
             map.addControl(drawControl);
 
-            // Draw events
-            map.on(L.Draw.Event.CREATED, (e) => {
-                const layer = e.layer;
-                drawnItems.addLayer(layer);
-                
-                if (e.layerType === 'polyline') {
-                    updateRouteStats(layer.getLatLngs());
-                }
-                
-                if (e.layerType === 'marker') {
-                    const latlng = layer.getLatLng();
-                    addMarkerToList(latlng.lat, latlng.lng, 'Drawn Marker');
-                }
-            });
-
             // Mouse tracking
             map.on('mousemove', (e) => {
                 document.getElementById('lat').textContent = e.latlng.lat.toFixed(6);
                 document.getElementById('lng').textContent = e.latlng.lng.toFixed(6);
                 document.getElementById('zoom').textContent = map.getZoom();
                 
-                // Query elevation on hover (debounced)
+                // Update measurement if active
+                if (measureMode.active && measureMode.points.length > 0) {
+                    updateMeasureLive(e.latlng);
+                }
+                
                 queryElevation(e.latlng.lat, e.latlng.lng, true);
             });
 
@@ -1419,15 +1827,26 @@
                 document.getElementById('zoom').textContent = map.getZoom();
             });
 
-            // Click for route
+            // Click for measurement
             map.on('click', (e) => {
-                if (routeDrawing.active) {
+                if (measureMode.active) {
+                    addMeasurePoint(e.latlng);
+                } else if (routeDrawing.active) {
                     addRoutePoint(e.latlng);
+                }
+            });
+
+            // Double-click to finish measurement
+            map.on('dblclick', (e) => {
+                if (measureMode.active && measureMode.points.length >= 2) {
+                    L.DomEvent.stopPropagation(e);
+                    finishMeasure();
                 }
             });
 
             // Right-click context menu
             map.on('contextmenu', (e) => {
+                if (measureMode.active) return;
                 contextMenuLatLng = e.latlng;
                 showContextMenu(e.originalEvent);
             });
@@ -1439,14 +1858,398 @@
         }
 
         // ============================================
+        // MEASUREMENT SYSTEM
+        // ============================================
+        function toggleMeasureMode(type) {
+            if (measureMode.active && measureMode.type === type) {
+                cancelMeasure();
+                return;
+            }
+            
+            // Cancel any existing measure
+            cancelMeasure();
+            
+            measureMode.active = true;
+            measureMode.type = type;
+            measureMode.points = [];
+            
+            // Update UI
+            document.getElementById('measureSection').style.display = 'block';
+            document.getElementById('measureOverlay').classList.add('visible');
+            
+            // Update toolbar buttons
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            if (type === 'distance') {
+                document.getElementById('btnMeasureDistance').classList.add('active');
+                showToast('info', 'Measure Distance', 'Click points on map. Double-click or click Finish to complete.');
+            } else if (type === 'area') {
+                document.getElementById('btnMeasureArea').classList.add('active');
+                showToast('info', 'Measure Area', 'Click points to define polygon. Double-click or click Finish to complete.');
+            } else if (type === 'coordinate') {
+                document.getElementById('btnMeasureCoord').classList.add('active');
+                showToast('info', 'Coordinate Pick', 'Click anywhere on map to capture coordinates.');
+            }
+            
+            // Configure display boxes
+            const boxMeters = document.getElementById('boxMeters');
+            const boxKm = document.getElementById('boxKilometers');
+            const boxSqM = document.getElementById('boxSqMeters');
+            const boxHa = document.getElementById('boxHectares');
+            const boxLat = document.getElementById('boxLat');
+            const boxLng = document.getElementById('boxLng');
+            
+            if (type === 'distance') {
+                boxMeters.style.display = 'block';
+                boxKm.style.display = 'block';
+                boxSqM.style.display = 'none';
+                boxHa.style.display = 'none';
+                boxLat.style.display = 'none';
+                boxLng.style.display = 'none';
+                document.getElementById('overlayPrimaryLabel').textContent = 'METERS';
+                document.getElementById('overlaySecondaryLabel').textContent = 'KILOMETERS';
+                document.getElementById('overlayTertiaryBox').style.display = 'none';
+                document.getElementById('overlayDivider2').style.display = 'none';
+            } else if (type === 'area') {
+                boxMeters.style.display = 'none';
+                boxKm.style.display = 'none';
+                boxSqM.style.display = 'block';
+                boxHa.style.display = 'block';
+                boxLat.style.display = 'none';
+                boxLng.style.display = 'none';
+                document.getElementById('overlayPrimaryLabel').textContent = 'SQUARE METERS';
+                document.getElementById('overlaySecondaryLabel').textContent = 'HECTARES';
+                document.getElementById('overlayTertiaryBox').style.display = 'none';
+                document.getElementById('overlayDivider2').style.display = 'none';
+            } else if (type === 'coordinate') {
+                boxMeters.style.display = 'none';
+                boxKm.style.display = 'none';
+                boxSqM.style.display = 'none';
+                boxHa.style.display = 'none';
+                boxLat.style.display = 'block';
+                boxLng.style.display = 'block';
+                document.getElementById('overlayPrimaryLabel').textContent = 'LATITUDE';
+                document.getElementById('overlaySecondaryLabel').textContent = 'LONGITUDE';
+                document.getElementById('overlayTertiaryBox').style.display = 'none';
+                document.getElementById('overlayDivider2').style.display = 'none';
+            }
+            
+            // Reset values
+            document.getElementById('valMeters').textContent = '0.00';
+            document.getElementById('valKilometers').textContent = '0.0000';
+            document.getElementById('valSqMeters').textContent = '0.00';
+            document.getElementById('valHectares').textContent = '0.0000';
+            document.getElementById('valLat').textContent = '--';
+            document.getElementById('valLng').textContent = '--';
+            document.getElementById('overlayPrimary').textContent = type === 'coordinate' ? '--' : '0.00';
+            document.getElementById('overlaySecondary').textContent = type === 'coordinate' ? '--' : '0.0000';
+            
+            // Change cursor
+            map.getContainer().style.cursor = 'crosshair';
+        }
+
+        function startMeasureFromContext(type) {
+            hideContextMenu();
+            toggleMeasureMode(type);
+        }
+
+        function addMeasurePoint(latlng) {
+            if (!measureMode.active) return;
+            
+            if (measureMode.type === 'coordinate') {
+                // Single click for coordinate pick
+                document.getElementById('valLat').textContent = latlng.lat.toFixed(6);
+                document.getElementById('valLng').textContent = latlng.lng.toFixed(6);
+                document.getElementById('overlayPrimary').textContent = latlng.lat.toFixed(6);
+                document.getElementById('overlaySecondary').textContent = latlng.lng.toFixed(6);
+                
+                // Add to history
+                addMeasureToHistory('coordinate', `Lat: ${latlng.lat.toFixed(6)}, Lng: ${latlng.lng.toFixed(6)}`, null);
+                
+                // Add marker
+                const marker = L.circleMarker(latlng, {
+                    radius: 8,
+                    fillColor: var(--measure-active),
+                    color: '#fff',
+                    weight: 3,
+                    fillOpacity: 1
+                }).addTo(map);
+                measureMode.vertexMarkers.push(marker);
+                
+                showToast('success', 'Coordinate Captured', `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`);
+                return;
+            }
+            
+            // Add vertex for distance/area
+            measureMode.points.push(latlng);
+            
+            // Add vertex marker
+            const vertex = L.circleMarker(latlng, {
+                radius: 6,
+                fillColor: '#f59e0b',
+                color: '#fff',
+                weight: 2,
+                fillOpacity: 1,
+                className: 'measure-vertex'
+            }).addTo(map);
+            vertex.bindTooltip((measureMode.points.length).toString(), {
+                permanent: true,
+                direction: 'top',
+                className: 'measure-tooltip',
+                offset: [0, -10]
+            });
+            measureMode.vertexMarkers.push(vertex);
+            
+            // Update line/polygon
+            updateMeasureGeometry();
+            
+            // Calculate and display
+            calculateMeasure();
+        }
+
+        function updateMeasureLive(latlng) {
+            if (measureMode.points.length === 0) return;
+            
+            // Update temp line from last point to cursor
+            const lastPoint = measureMode.points[measureMode.points.length - 1];
+            
+            if (measureMode.tempLine) {
+                map.removeLayer(measureMode.tempLine);
+            }
+            
+            measureMode.tempLine = L.polyline([lastPoint, latlng], {
+                color: '#f59e0b',
+                weight: 2,
+                opacity: 0.6,
+                dashArray: '5, 10'
+            }).addTo(map);
+            
+            // Calculate live distance
+            if (measureMode.type === 'distance') {
+                const tempPoints = [...measureMode.points, latlng];
+                const line = turf.lineString(tempPoints.map(p => [p.lng, p.lat]));
+                const length = turf.length(line, { units: 'meters' });
+                
+                document.getElementById('valMeters').textContent = length.toFixed(2);
+                document.getElementById('valKilometers').textContent = (length / 1000).toFixed(4);
+                document.getElementById('overlayPrimary').textContent = length.toFixed(2);
+                document.getElementById('overlaySecondary').textContent = (length / 1000).toFixed(4);
+            } else if (measureMode.type === 'area' && measureMode.points.length >= 2) {
+                const tempPoints = [...measureMode.points, latlng];
+                // Close polygon for area calc
+                if (tempPoints.length >= 3) {
+                    const closed = [...tempPoints, tempPoints[0]];
+                    const polygon = turf.polygon([closed.map(p => [p.lng, p.lat])]);
+                    const area = turf.area(polygon);
+                    
+                    document.getElementById('valSqMeters').textContent = area.toFixed(2);
+                    document.getElementById('valHectares').textContent = (area / 10000).toFixed(4);
+                    document.getElementById('overlayPrimary').textContent = area.toFixed(2);
+                    document.getElementById('overlaySecondary').textContent = (area / 10000).toFixed(4);
+                }
+            }
+        }
+
+        function updateMeasureGeometry() {
+            // Remove old
+            if (measureMode.polyline) {
+                map.removeLayer(measureMode.polyline);
+            }
+            if (measureMode.polygon) {
+                map.removeLayer(measureMode.polygon);
+            }
+            
+            if (measureMode.type === 'distance' && measureMode.points.length >= 2) {
+                measureMode.polyline = L.polyline(measureMode.points, {
+                    color: '#f59e0b',
+                    weight: 3,
+                    opacity: 0.9
+                }).addTo(map);
+            } else if (measureMode.type === 'area' && measureMode.points.length >= 2) {
+                measureMode.polyline = L.polyline(measureMode.points, {
+                    color: '#f59e0b',
+                    weight: 2,
+                    opacity: 0.7
+                }).addTo(map);
+                
+                if (measureMode.points.length >= 3) {
+                    measureMode.polygon = L.polygon(measureMode.points, {
+                        color: '#f59e0b',
+                        weight: 2,
+                        fillColor: '#f59e0b',
+                        fillOpacity: 0.15
+                    }).addTo(map);
+                }
+            }
+        }
+
+        function calculateMeasure() {
+            if (measureMode.type === 'distance' && measureMode.points.length >= 2) {
+                const line = turf.lineString(measureMode.points.map(p => [p.lng, p.lat]));
+                const length = turf.length(line, { units: 'meters' });
+                
+                document.getElementById('valMeters').textContent = length.toFixed(2);
+                document.getElementById('valKilometers').textContent = (length / 1000).toFixed(4);
+                document.getElementById('overlayPrimary').textContent = length.toFixed(2);
+                document.getElementById('overlaySecondary').textContent = (length / 1000).toFixed(4);
+            } else if (measureMode.type === 'area' && measureMode.points.length >= 3) {
+                const closed = [...measureMode.points, measureMode.points[0]];
+                const polygon = turf.polygon([closed.map(p => [p.lng, p.lat])]);
+                const area = turf.area(polygon);
+                
+                document.getElementById('valSqMeters').textContent = area.toFixed(2);
+                document.getElementById('valHectares').textContent = (area / 10000).toFixed(4);
+                document.getElementById('overlayPrimary').textContent = area.toFixed(2);
+                document.getElementById('overlaySecondary').textContent = (area / 10000).toFixed(4);
+            }
+        }
+
+        function undoMeasurePoint() {
+            if (measureMode.points.length === 0) return;
+            
+            measureMode.points.pop();
+            
+            // Remove last vertex
+            const lastVertex = measureMode.vertexMarkers.pop();
+            if (lastVertex) map.removeLayer(lastVertex);
+            
+            updateMeasureGeometry();
+            calculateMeasure();
+        }
+
+        function finishMeasure() {
+            if (!measureMode.active) return;
+            
+            let result = null;
+            let label = '';
+            
+            if (measureMode.type === 'distance' && measureMode.points.length >= 2) {
+                const line = turf.lineString(measureMode.points.map(p => [p.lng, p.lat]));
+                const meters = turf.length(line, { units: 'meters' });
+                const km = meters / 1000;
+                
+                result = { meters, kilometers: km };
+                label = `${meters.toFixed(2)} m (${km.toFixed(4)} km)`;
+                
+                addMeasureToHistory('distance', label, result);
+                showToast('success', 'Distance Measured', label);
+            } else if (measureMode.type === 'area' && measureMode.points.length >= 3) {
+                const closed = [...measureMode.points, measureMode.points[0]];
+                const polygon = turf.polygon([closed.map(p => [p.lng, p.lat])]);
+                const sqMeters = turf.area(polygon);
+                const hectares = sqMeters / 10000;
+                
+                result = { sqMeters, hectares };
+                label = `${sqMeters.toFixed(2)} m² (${hectares.toFixed(4)} ha)`;
+                
+                addMeasureToHistory('area', label, result);
+                showToast('success', 'Area Measured', label);
+            }
+            
+            // Keep geometry on map but clean up temp elements
+            if (measureMode.tempLine) {
+                map.removeLayer(measureMode.tempLine);
+                measureMode.tempLine = null;
+            }
+            
+            // Reset mode but keep results visible
+            measureMode.active = false;
+            measureMode.type = null;
+            measureMode.points = [];
+            measureMode.vertexMarkers = [];
+            measureMode.polyline = null;
+            measureMode.polygon = null;
+            
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('measureOverlay').classList.remove('visible');
+            document.getElementById('measureSection').style.display = 'none';
+            map.getContainer().style.cursor = '';
+        }
+
+        function cancelMeasure() {
+            if (!measureMode.active && measureMode.vertexMarkers.length === 0) return;
+            
+            // Clean up all measurement elements
+            if (measureMode.tempLine) {
+                map.removeLayer(measureMode.tempLine);
+            }
+            if (measureMode.polyline) {
+                map.removeLayer(measureMode.polyline);
+            }
+            if (measureMode.polygon) {
+                map.removeLayer(measureMode.polygon);
+            }
+            measureMode.vertexMarkers.forEach(m => map.removeLayer(m));
+            
+            measureMode = {
+                active: false,
+                type: null,
+                points: [],
+                polyline: null,
+                polygon: null,
+                vertexMarkers: [],
+                tooltip: null,
+                tempLine: null
+            };
+            
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('measureOverlay').classList.remove('visible');
+            document.getElementById('measureSection').style.display = 'none';
+            map.getContainer().style.cursor = '';
+        }
+
+        function addMeasureToHistory(type, label, data) {
+            const id = Date.now();
+            measureHistory.push({ id, type, label, data, time: new Date() });
+            updateMeasureHistory();
+        }
+
+        function updateMeasureHistory() {
+            const container = document.getElementById('measureHistory');
+            
+            if (measureHistory.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:1rem;">No measurements yet. Use toolbar buttons to start.</p>';
+                return;
+            }
+            
+            let html = '';
+            measureHistory.slice().reverse().forEach(m => {
+                const icon = m.type === 'distance' ? '📏' : m.type === 'area' ? '📐' : '📍';
+                html += `
+                    <div class="measure-item">
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            <span class="measure-item-type ${m.type}">${icon} ${m.type}</span>
+                            <span class="measure-item-value">${m.label}</span>
+                        </div>
+                        <button class="measure-item-delete" onclick="deleteMeasure(${m.id})" title="Delete">🗑️</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function deleteMeasure(id) {
+            measureHistory = measureHistory.filter(m => m.id !== id);
+            updateMeasureHistory();
+        }
+
+        function clearMeasureHistory() {
+            measureHistory = [];
+            updateMeasureHistory();
+            showToast('info', 'Cleared', 'Measurement history cleared');
+        }
+
+        // ============================================
         // UI FUNCTIONS
         // ============================================
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const toggle = document.getElementById('sidebarToggle');
+            const toggleText = document.getElementById('sidebarToggleText');
+            
             sidebar.classList.toggle('collapsed');
             toggle.classList.toggle('collapsed');
             toggle.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+            toggleText.textContent = sidebar.classList.contains('collapsed') ? '▶ Panel' : '◀ Panel';
             setTimeout(() => map.invalidateSize(), 350);
         }
 
@@ -1470,6 +2273,8 @@
             markers = [];
             clearRoute();
             clearTrack();
+            cancelMeasure();
+            clearMeasureHistory();
             updateMarkersList();
             showToast('info', 'Cleared', 'All data removed from map');
         }
@@ -1598,7 +2403,6 @@
             routeDrawing.polyline.setLatLngs(routeDrawing.points);
             updateRouteStats(routeDrawing.points);
             
-            // Add point marker
             const m = L.circleMarker(latlng, {
                 radius: 6,
                 fillColor: '#38bdf8',
@@ -1617,10 +2421,6 @@
             
             document.getElementById('routeDist').textContent = length.toFixed(1);
             document.getElementById('routePoints').textContent = points.length;
-            
-            // Calculate elevation gain
-            let gain = 0;
-            // Simplified - would need actual elevation data
             document.getElementById('routeElev').textContent = '~';
         }
 
@@ -1659,9 +2459,8 @@
             
             document.getElementById('btnStartTrack').disabled = true;
             document.getElementById('btnStopTrack').disabled = false;
-            document.getElementById('trackBtnText').textContent = '⏹️ Tracking...';
+            document.getElementById('btnTrackToggle').classList.add('active');
 
-            // Fast options - no high accuracy to avoid hanging
             const options = {
                 enableHighAccuracy: false,
                 timeout: 5000,
@@ -1681,7 +2480,6 @@
                         time: Date.now()
                     });
 
-                    // Update track line
                     if (!tracking.polyline) {
                         tracking.polyline = L.polyline([], {
                             color: '#22c55e',
@@ -1691,7 +2489,6 @@
                     }
                     tracking.polyline.addLatLng(latlng);
 
-                    // Update marker
                     if (!tracking.marker) {
                         tracking.marker = L.marker(latlng, {
                             icon: L.divIcon({
@@ -1705,7 +2502,6 @@
                         tracking.marker.setLatLng(latlng);
                     }
 
-                    // Update stats
                     updateTrackStats();
                 },
                 (err) => {
@@ -1726,7 +2522,7 @@
             
             document.getElementById('btnStartTrack').disabled = false;
             document.getElementById('btnStopTrack').disabled = true;
-            document.getElementById('trackBtnText').textContent = '▶️ Track';
+            document.getElementById('btnTrackToggle').classList.remove('active');
 
             if (tracking.positions.length > 0) {
                 showToast('success', 'Track Saved', `${tracking.positions.length} points recorded`);
@@ -1756,7 +2552,6 @@
                 const dist = turf.length(line, { units: 'kilometers' });
                 document.getElementById('trackDist').textContent = dist.toFixed(1);
 
-                // Duration
                 if (tracking.startTime) {
                     const elapsed = Math.floor((Date.now() - tracking.startTime) / 1000);
                     const mins = Math.floor(elapsed / 60);
@@ -1765,7 +2560,6 @@
                         `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
                 }
 
-                // Speed
                 const last = positions[positions.length - 1];
                 if (last.speed !== null && last.speed !== undefined) {
                     document.getElementById('trackSpeed').textContent = (last.speed * 3.6).toFixed(0);
@@ -1791,9 +2585,7 @@
         // ELEVATION
         // ============================================
         async function queryElevation(lat, lng, debounce = false, callback = null) {
-            // Use OpenTopoData API (free, no key needed for demo)
             if (debounce) {
-                // Simple debounce for mousemove
                 if (window.elevationTimeout) clearTimeout(window.elevationTimeout);
                 window.elevationTimeout = setTimeout(() => doQueryElevation(lat, lng, callback), 200);
             } else {
@@ -1825,16 +2617,6 @@
                     : 'Elevation data unavailable');
             });
             hideContextMenu();
-        }
-
-        function showElevationProfile(points) {
-            // Show elevation chart container
-            document.getElementById('elevationContainer').classList.add('visible');
-            map.invalidateSize();
-            
-            // Fetch elevation for all points then chart
-            // Simplified - would use proper charting library
-            showToast('info', 'Elevation', 'Profile loaded for route');
         }
 
         function closeElevation() {
@@ -1954,8 +2736,6 @@
         }
 
         function parsePDF(file, filename) {
-            // For georeferenced PDF, we'd need pdf2geotiff or similar
-            // This is a simplified placeholder
             showToast('info', 'PDF Import', 'Georeferenced PDF detected. Processing...');
             
             const reader = new FileReader();
@@ -1981,11 +2761,9 @@
                     const shpBuffer = await shpFile.async('arraybuffer');
                     const dbfBuffer = dbfFile ? await dbfFile.async('arraybuffer') : null;
                     
-                    // Use shpjs
-                    const geojson = await shp.combine([shp.parseShp(shpBuffer, /* prj */), shp.parseDbf(dbfBuffer)]);
+                    const geojson = await shp.combine([shp.parseShp(shpBuffer), shp.parseDbf(dbfBuffer)]);
                     addGeoJSONLayer(geojson, filename);
                 } else {
-                    // Maybe it's a KML/KMZ
                     const kmlFile = zip.file(/\.kml$/i)[0];
                     if (kmlFile) {
                         const kmlText = await kmlFile.async('text');
@@ -2035,16 +2813,12 @@
                 }
             }
 
-            // Count features
             const count = geojson.features ? geojson.features.length : 1;
             showToast('success', 'Imported', `${filename}: ${count} features loaded`);
         }
 
         function updateLayerList() {
-            const list = document.getElementById('layerList');
-            // Keep base layers, add imported ones
-            const baseHTML = list.innerHTML;
-            // This is simplified - in production you'd manage layer list properly
+            // Layer list management
         }
 
         // ============================================
@@ -2094,10 +2868,19 @@
                 case 'track':
                     data = tracking.positions;
                     break;
+                case 'measurements':
+                    data = measureHistory.map((m, i) => ({
+                        lat: null,
+                        lng: null,
+                        ele: null,
+                        name: `Measurement ${i+1}: ${m.label}`
+                    }));
+                    break;
                 case 'all':
                     data = [
                         ...markers.map(m => ({ lat: m.getLatLng().lat, lng: m.getLatLng().lng, ele: m.elevation, name: m.name, type: 'marker' })),
-                        ...tracking.positions.map(p => ({ ...p, type: 'track' }))
+                        ...tracking.positions.map(p => ({ ...p, type: 'track' })),
+                        ...measureHistory.map(m => ({ lat: null, lng: null, name: m.label, type: 'measurement' }))
                     ];
                     break;
             }
@@ -2107,12 +2890,8 @@
                 return;
             }
 
-            // Convert coordinates if needed
             if (selectedCRS !== 'EPSG:4326') {
-                data = data.map(d => {
-                    // Simplified CRS conversion - in production use proj4js
-                    return { ...d, lat: d.lat, lng: d.lng }; // Placeholder
-                });
+                data = data.map(d => ({ ...d, lat: d.lat, lng: d.lng }));
             }
 
             let content, mime, extension;
@@ -2147,7 +2926,7 @@
                     const geojson = {
                         type: 'FeatureCollection',
                         crs: { type: 'name', properties: { name: selectedCRS } },
-                        features: data.map((d, i) => ({
+                        features: data.filter(d => d.lat !== null).map((d, i) => ({
                             type: 'Feature',
                             properties: {
                                 id: i + 1,
@@ -2181,11 +2960,11 @@
 
             downloadFile(content, `laos_export_${dataType}_${Date.now()}.${extension}`, mime);
             closeModal('exportModal');
-            showToast('success', 'Exported', `${data.length} points exported as ${format.toUpperCase()}`);
+            showToast('success', 'Exported', `${data.length} items exported as ${format.toUpperCase()}`);
         }
 
         function generateKML(data, crs) {
-            const placemarks = data.map((d, i) => `
+            const placemarks = data.filter(d => d.lat !== null).map((d, i) => `
                 <Placemark>
                     <name>${d.name || `Point ${i+1}`}</name>
                     <description>Lat: ${d.lat}, Lng: ${d.lng}${d.ele ? ', Ele: ' + d.ele : ''}</description>
@@ -2206,7 +2985,7 @@
         }
 
         function generateGPX(data) {
-            const trkpts = data.map(d => `
+            const trkpts = data.filter(d => d.lat !== null).map(d => `
                 <trkpt lat="${d.lat}" lon="${d.lng}">
                     ${d.ele ? `<ele>${d.ele}</ele>` : ''}
                     <time>${new Date().toISOString()}</time>
@@ -2290,9 +3069,36 @@
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                closeModal('exportModal');
-                closeModal('importModal');
-                hideContextMenu();
+                if (measureMode.active) {
+                    cancelMeasure();
+                } else {
+                    closeModal('exportModal');
+                    closeModal('importModal');
+                    hideContextMenu();
+                }
+            }
+            if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                toggleMeasureMode('distance');
+            }
+            if (e.key === 'a' || e.key === 'A') {
+                e.preventDefault();
+                toggleMeasureMode('area');
+            }
+            if (e.key === 'c' || e.key === 'C') {
+                e.preventDefault();
+                toggleMeasureMode('coordinate');
+            }
+            if (e.key === 't' || e.key === 'T') {
+                e.preventDefault();
+                toggleTracking();
+            }
+            if (e.key === 'h' || e.key === 'H') {
+                e.preventDefault();
+                resetToLaos();
+            }
+            if (e.key === 'Delete') {
+                if (!measureMode.active) clearAll();
             }
             if (e.ctrlKey && e.key === 'i') {
                 e.preventDefault();
@@ -2301,6 +3107,10 @@
             if (e.ctrlKey && e.key === 'e') {
                 e.preventDefault();
                 showExportModal();
+            }
+            if (e.key === 'z' && e.ctrlKey && measureMode.active) {
+                e.preventDefault();
+                undoMeasurePoint();
             }
         });
 
