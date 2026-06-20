@@ -1,1 +1,0 @@
-# laogis-map.v.3.0
