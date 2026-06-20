@@ -126,7 +126,9 @@
             flex-direction: column;
         }
 
-        /* Header */
+        /* ============================================
+           HEADER & TOOLBAR - DESKTOP FULL, MOBILE MENU
+           ============================================ */
         .header {
             height: 56px;
             background: rgba(15, 23, 42, 0.98);
@@ -162,7 +164,7 @@
             font-weight: 600;
         }
 
-        /* Toolbar / Menu Bar */
+        /* --- DESKTOP TOOLBAR (visible on desktop) --- */
         .toolbar {
             display: flex;
             align-items: center;
@@ -238,21 +240,107 @@
             font-weight: 500;
         }
 
-        .tool-btn .tool-badge {
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            background: var(--danger);
-            color: white;
-            font-size: 0.6rem;
-            padding: 0.05rem 0.3rem;
-            border-radius: 999px;
-            font-weight: 700;
+        /* --- MOBILE MENU (hidden on desktop) --- */
+        .mobile-menu-btn {
             display: none;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+            font-family: inherit;
         }
 
-        .tool-btn.has-badge .tool-badge {
+        .mobile-menu-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Mobile Dropdown Menu */
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 56px;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 999;
+            max-height: calc(100vh - 56px);
+            overflow-y: auto;
+            padding: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .mobile-menu.active {
             display: block;
+        }
+
+        .mobile-menu-section {
+            margin-bottom: 0.75rem;
+        }
+
+        .mobile-menu-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .mobile-menu-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 700;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 0.25rem;
+        }
+
+        .mobile-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border: 1px solid transparent;
+        }
+
+        .mobile-menu-item:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .mobile-menu-item.active {
+            background: var(--measure-bg);
+            color: var(--measure-active);
+            border-color: var(--measure-active);
+        }
+
+        .mobile-menu-item .mm-icon {
+            font-size: 1.2rem;
+            width: 28px;
+            text-align: center;
+        }
+
+        .mobile-menu-item .mm-text {
+            flex: 1;
+        }
+
+        .mobile-menu-item .mm-shortcut {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'SF Mono', monospace;
+            background: var(--bg-primary);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
         }
 
         /* Header Actions */
@@ -1099,7 +1187,26 @@
             background: var(--text-muted);
         }
 
-        /* Responsive */
+        /* ============================================
+           RESPONSIVE BREAKPOINTS
+           ============================================ */
+        
+        /* Tablet and below: show hamburger, hide desktop toolbar */
+        @media (max-width: 900px) {
+            .toolbar {
+                display: none !important;
+            }
+            
+            .mobile-menu-btn {
+                display: flex;
+            }
+            
+            .header-title {
+                display: none;
+            }
+        }
+
+        /* Mobile specific adjustments */
         @media (max-width: 768px) {
             .sidebar {
                 position: absolute;
@@ -1107,17 +1214,23 @@
                 height: 100%;
                 box-shadow: 4px 0 15px rgba(0,0,0,0.3);
             }
+            
             .sidebar.collapsed {
                 width: 0;
             }
-            .toolbar-label {
-                display: none;
+            
+            .measure-overlay {
+                top: 66px;
+                padding: 0.5rem 0.75rem;
+                gap: 0.75rem;
             }
-            .tool-btn .tool-text {
-                display: none;
+            
+            .measure-overlay-value {
+                font-size: 1rem;
             }
-            .header-title {
-                display: none;
+            
+            .mobile-menu-item {
+                padding: 0.85rem;
             }
         }
 
@@ -1271,15 +1384,15 @@
 
     <!-- App -->
     <div id="app">
-        <!-- Header with Toolbar -->
+        <!-- Header -->
         <header class="header">
             <div class="header-brand">
                 <span class="header-logo">LA</span>
                 <span class="header-title">Laos GIS Mapper Pro</span>
             </div>
 
-            <!-- Measurement & Tools Toolbar -->
-            <div class="toolbar">
+            <!-- DESKTOP: Full Toolbar (hidden on mobile) -->
+            <div class="toolbar" id="desktopToolbar">
                 <!-- Measure Group -->
                 <div class="toolbar-group">
                     <span class="toolbar-label">Measure</span>
@@ -1328,12 +1441,76 @@
                 </div>
             </div>
 
+            <!-- MOBILE: Hamburger Menu Button (hidden on desktop) -->
+            <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+                <span>☰</span>
+                <span style="font-size:0.7rem;font-weight:600;">Menu</span>
+            </button>
+
             <div class="header-actions">
                 <button class="btn btn-secondary btn-xs" onclick="toggleSidebar()">
                     <span id="sidebarToggleText">◀ Panel</span>
                 </button>
             </div>
         </header>
+
+        <!-- MOBILE: Dropdown Menu (hidden on desktop) -->
+        <div class="mobile-menu" id="mobileMenu">
+            <!-- Measure Section -->
+            <div class="mobile-menu-section">
+                <div class="mobile-menu-title">📐 Measure</div>
+                <div class="mobile-menu-item" id="mmMeasureDistance" onclick="mobileMenuAction('distance')">
+                    <span class="mm-icon">📏</span>
+                    <span class="mm-text">Measure Distance</span>
+                    <span class="mm-shortcut">M</span>
+                </div>
+                <div class="mobile-menu-item" id="mmMeasureArea" onclick="mobileMenuAction('area')">
+                    <span class="mm-icon">📐</span>
+                    <span class="mm-text">Measure Area</span>
+                    <span class="mm-shortcut">A</span>
+                </div>
+                <div class="mobile-menu-item" id="mmMeasureCoord" onclick="mobileMenuAction('coordinate')">
+                    <span class="mm-icon">📍</span>
+                    <span class="mm-text">Pick Coordinates</span>
+                    <span class="mm-shortcut">C</span>
+                </div>
+            </div>
+
+            <!-- Tools Section -->
+            <div class="mobile-menu-section">
+                <div class="mobile-menu-title">🛠️ Tools</div>
+                <div class="mobile-menu-item" onclick="mobileMenuAction('import')">
+                    <span class="mm-icon">📥</span>
+                    <span class="mm-text">Import Data</span>
+                    <span class="mm-shortcut">Ctrl+I</span>
+                </div>
+                <div class="mobile-menu-item" onclick="mobileMenuAction('export')">
+                    <span class="mm-icon">📤</span>
+                    <span class="mm-text">Export Data</span>
+                    <span class="mm-shortcut">Ctrl+E</span>
+                </div>
+                <div class="mobile-menu-item" id="mmTrackToggle" onclick="mobileMenuAction('track')">
+                    <span class="mm-icon">🛰️</span>
+                    <span class="mm-text">GPS Track</span>
+                    <span class="mm-shortcut">T</span>
+                </div>
+            </div>
+
+            <!-- View Section -->
+            <div class="mobile-menu-section">
+                <div class="mobile-menu-title">👁️ View</div>
+                <div class="mobile-menu-item" onclick="mobileMenuAction('laos')">
+                    <span class="mm-icon">🇱🇦</span>
+                    <span class="mm-text">Center on Laos</span>
+                    <span class="mm-shortcut">H</span>
+                </div>
+                <div class="mobile-menu-item" onclick="mobileMenuAction('clear')">
+                    <span class="mm-icon">🗑️</span>
+                    <span class="mm-text">Clear All Data</span>
+                    <span class="mm-shortcut">Del</span>
+                </div>
+            </div>
+        </div>
 
         <!-- Main Content -->
         <div class="main-container">
@@ -1741,15 +1918,12 @@
         // RELIABLE FAST INITIALIZATION - NO HANG
         // ============================================
         
-        // Method 1: Try immediate init if DOM already ready
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
             setTimeout(initApp, 1);
         } else {
-            // Method 2: Wait for DOMContentLoaded
             document.addEventListener('DOMContentLoaded', initApp);
         }
         
-        // Method 3: Fallback - force hide loader after max 2 seconds no matter what
         setTimeout(forceHideLoader, 2000);
 
         function forceHideLoader() {
@@ -1768,18 +1942,13 @@
         }
 
         function initApp() {
-            // Show app container
             const app = document.getElementById('app');
             if (app) app.style.display = 'flex';
             
-            // Initialize map immediately
             initMap();
-            
-            // Setup other features
             initDragDrop();
             setupContextMenu();
             
-            // Hide loader with smooth fade
             const loader = document.getElementById('loader');
             if (loader) {
                 loader.style.opacity = '0';
@@ -1792,10 +1961,91 @@
         }
 
         // ============================================
+        // MOBILE MENU FUNCTIONS
+        // ============================================
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('active');
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobileMenu').classList.remove('active');
+        }
+
+        function mobileMenuAction(action) {
+            closeMobileMenu();
+            
+            switch(action) {
+                case 'distance':
+                    toggleMeasureMode('distance');
+                    break;
+                case 'area':
+                    toggleMeasureMode('area');
+                    break;
+                case 'coordinate':
+                    toggleMeasureMode('coordinate');
+                    break;
+                case 'import':
+                    showImportModal();
+                    break;
+                case 'export':
+                    showExportModal();
+                    break;
+                case 'track':
+                    toggleTracking();
+                    break;
+                case 'laos':
+                    resetToLaos();
+                    break;
+                case 'clear':
+                    clearAll();
+                    break;
+            }
+        }
+
+        // Update mobile menu active states to match desktop
+        function updateMobileMenuState() {
+            // Distance
+            const mmDist = document.getElementById('mmMeasureDistance');
+            const btnDist = document.getElementById('btnMeasureDistance');
+            if (mmDist && btnDist) {
+                mmDist.className = btnDist.classList.contains('active') 
+                    ? 'mobile-menu-item active' 
+                    : 'mobile-menu-item';
+            }
+            
+            // Area
+            const mmArea = document.getElementById('mmMeasureArea');
+            const btnArea = document.getElementById('btnMeasureArea');
+            if (mmArea && btnArea) {
+                mmArea.className = btnArea.classList.contains('active') 
+                    ? 'mobile-menu-item active' 
+                    : 'mobile-menu-item';
+            }
+            
+            // Coordinate
+            const mmCoord = document.getElementById('mmMeasureCoord');
+            const btnCoord = document.getElementById('btnMeasureCoord');
+            if (mmCoord && btnCoord) {
+                mmCoord.className = btnCoord.classList.contains('active') 
+                    ? 'mobile-menu-item active' 
+                    : 'mobile-menu-item';
+            }
+            
+            // Track
+            const mmTrack = document.getElementById('mmTrackToggle');
+            const btnTrack = document.getElementById('btnTrackToggle');
+            if (mmTrack && btnTrack) {
+                mmTrack.className = btnTrack.classList.contains('active') 
+                    ? 'mobile-menu-item active' 
+                    : 'mobile-menu-item';
+            }
+        }
+
+        // ============================================
         // MAP INITIALIZATION
         // ============================================
         function initMap() {
-            // Prevent double init
             if (map) return;
             
             map = L.map('map', {
@@ -1805,7 +2055,6 @@
 
             L.control.zoom({ position: 'topright' }).addTo(map);
 
-            // Base layers
             layers.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
@@ -1824,11 +2073,9 @@
             layers.osm.addTo(map);
             activeBaseLayer = layers.osm;
 
-            // Drawn items layer
             drawnItems = new L.FeatureGroup();
             map.addLayer(drawnItems);
 
-            // Leaflet Draw controls (disabled by default, we use custom measurement)
             const drawControl = new L.Control.Draw({
                 draw: {
                     polyline: false,
@@ -1845,7 +2092,6 @@
             });
             map.addControl(drawControl);
 
-            // Mouse tracking
             map.on('mousemove', (e) => {
                 document.getElementById('lat').textContent = e.latlng.lat.toFixed(6);
                 document.getElementById('lng').textContent = e.latlng.lng.toFixed(6);
@@ -1862,7 +2108,6 @@
                 document.getElementById('zoom').textContent = map.getZoom();
             });
 
-            // Click for measurement
             map.on('click', (e) => {
                 if (measureMode.active) {
                     addMeasurePoint(e.latlng);
@@ -1871,7 +2116,6 @@
                 }
             });
 
-            // Double-click to finish measurement
             map.on('dblclick', (e) => {
                 if (measureMode.active && measureMode.points.length >= 2) {
                     L.DomEvent.stopPropagation(e);
@@ -1879,14 +2123,12 @@
                 }
             });
 
-            // Right-click context menu
             map.on('contextmenu', (e) => {
                 if (measureMode.active) return;
                 contextMenuLatLng = e.latlng;
                 showContextMenu(e.originalEvent);
             });
 
-            // Initial coords
             document.getElementById('lat').textContent = LAOS_CENTER[0].toFixed(6);
             document.getElementById('lng').textContent = LAOS_CENTER[1].toFixed(6);
             document.getElementById('zoom').textContent = DEFAULT_ZOOM;
@@ -1921,6 +2163,8 @@
                 document.getElementById('btnMeasureCoord').classList.add('active');
                 showToast('info', 'Coordinate Pick', 'Click anywhere on map to capture coordinates.');
             }
+            
+            updateMobileMenuState();
             
             const boxMeters = document.getElementById('boxMeters');
             const boxKm = document.getElementById('boxKilometers');
@@ -2176,6 +2420,8 @@
             document.getElementById('measureOverlay').classList.remove('visible');
             document.getElementById('measureSection').style.display = 'none';
             map.getContainer().style.cursor = '';
+            
+            updateMobileMenuState();
         }
 
         function cancelMeasure() {
@@ -2207,6 +2453,8 @@
             document.getElementById('measureOverlay').classList.remove('visible');
             document.getElementById('measureSection').style.display = 'none';
             map.getContainer().style.cursor = '';
+            
+            updateMobileMenuState();
         }
 
         function addMeasureToHistory(type, label, data) {
@@ -2515,6 +2763,7 @@
                     }
 
                     updateTrackStats();
+                    updateMobileMenuState();
                 },
                 (err) => {
                     console.warn('GPS error:', err);
@@ -2539,6 +2788,8 @@
             if (tracking.positions.length > 0) {
                 showToast('success', 'Track Saved', `${tracking.positions.length} points recorded`);
             }
+            
+            updateMobileMenuState();
         }
 
         function clearTrack() {
@@ -3031,7 +3282,16 @@
         // CONTEXT MENU
         // ============================================
         function setupContextMenu() {
-            document.addEventListener('click', () => hideContextMenu());
+            document.addEventListener('click', (e) => {
+                // Close mobile menu when clicking outside
+                const menu = document.getElementById('mobileMenu');
+                const btn = document.getElementById('mobileMenuBtn');
+                if (menu && menu.classList.contains('active') && 
+                    !menu.contains(e.target) && !btn.contains(e.target)) {
+                    closeMobileMenu();
+                }
+                hideContextMenu();
+            });
         }
 
         function showContextMenu(e) {
@@ -3086,6 +3346,7 @@
                 } else {
                     closeModal('exportModal');
                     closeModal('importModal');
+                    closeMobileMenu();
                     hideContextMenu();
                 }
             }
