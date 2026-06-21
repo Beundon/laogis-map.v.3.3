@@ -1829,10 +1829,6 @@
                                 <span class="coord-value" id="lng">--</span>
                             </div>
                             <div class="coord-row">
-                                <span class="coord-label">Elevation (m)</span>
-                                <span class="coord-value" id="ele">--</span>
-                            </div>
-                            <div class="coord-row">
                                 <span class="coord-label">Zoom Level</span>
                                 <span class="coord-value" id="zoom">--</span>
                             </div>
@@ -2742,15 +2738,11 @@
                 document.getElementById('lat').textContent = e.latlng.lat.toFixed(6);
                 document.getElementById('lng').textContent = e.latlng.lng.toFixed(6);
                 document.getElementById('zoom').textContent = map.getZoom();
-                
+
                 if (measureMode.active && measureMode.points.length > 0) {
                     updateMeasureLive(e.latlng);
                 }
-                
-                queryElevation(e.latlng.lat, e.latlng.lng, true);
-            });
-
-            map.on('zoomend', () => {
+            });map.on('zoomend', () => {
                 document.getElementById('zoom').textContent = map.getZoom();
             });
 
