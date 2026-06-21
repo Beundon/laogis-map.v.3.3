@@ -917,7 +917,7 @@
         /* GPS FAB (Floating Action Button) for mobile */
         .gps-fab {
             position: absolute;
-            bottom: 24px;
+            bottom: 100px;
             right: 24px;
             z-index: 450;
             width: 56px;
@@ -1574,10 +1574,65 @@
         .leaflet-control-locate-compass-bearing {
             fill: var(--gps-active) !important;
         }
+
+        /* Performance: Smooth tile rendering */
+        .leaflet-tile {
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        .leaflet-zoom-anim .leaflet-zoom-animated {
+            will-change: transform;
+            transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .leaflet-fade-anim .leaflet-tile {
+            will-change: opacity;
+        }
+
+        /* Larger touch targets for mobile zoom */
+        .leaflet-control-zoom a {
+            width: 40px !important;
+            height: 40px !important;
+            line-height: 40px !important;
+            font-size: 20px !important;
+        }
+
+        /* Mobile: Move zoom control up to avoid FAB overlap */
+        @media (max-width: 768px) {
+            .leaflet-control-zoom {
+                margin-bottom: 90px !important;
+            }
+            .leaflet-control-locate {
+                margin-bottom: 90px !important;
+            }
+        }
+
+        /* Mobile zoom performance */
+        @media (max-width: 768px) {
+            .leaflet-control-zoom {
+                margin-bottom: 90px !important;
+            }
+            .leaflet-control-locate {
+                margin-bottom: 90px !important;
+            }
+        }
+
+        /* Touch action optimization */
+        .leaflet-container {
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
 </style>
     <!-- Leaflet Locate Control -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.81.1/dist/L.Control.Locate.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.81.1/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+
+    <!-- Leaflet SmoothWheelZoom Plugin for smooth Google Maps-like zooming -->
+    <script src="https://cdn.jsdelivr.net/gh/mutsuyuki/Leaflet.SmoothWheelZoom@master/SmoothWheelZoom.js"></script>
 
 </head>
 <body>
@@ -2564,24 +2619,55 @@
             
             map = L.map('map', {
                 zoomControl: false,
-                attributionControl: false
+                attributionControl: false,
+                preferCanvas: true,
+                zoomSnap: 0,
+                zoomDelta: 0.5,
+                wheelPxPerZoomLevel: 120,
+                bounceAtZoomLimits: true,
+                tap: false,
+                touchZoom: true,
+                inertia: true,
+                inertiaDeceleration: 3000,
+                inertiaMaxSpeed: 1500,
+                easeLinearity: 0.25,
+                worldCopyJump: true,
+                maxBoundsViscosity: 1.0,
+                smoothWheelZoom: true,
+                smoothSensitivity: 1.5,
+                renderer: L.canvas({ padding: 0.5 })
             }).setView(LAOS_CENTER, DEFAULT_ZOOM);
 
-            L.control.zoom({ position: 'topright' }).addTo(map);
-
-            layers.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            // Responsive zoom control - bottom right to avoid top-right conflicts
+            L.control.zoom({ 
+                position: 'bottomright',
+                zoomInTitle: 'Zoom In',
+                zoomOutTitle: 'Zoom Out'
+            }).addTo(map);layers.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                attribution: '© OpenStreetMap'
+                attribution: '© OpenStreetMap',
+                updateWhenZooming: false,
+                updateWhenIdle: true,
+                updateInterval: 200,
+                keepBuffer: 4
             });
 
             layers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 19,
-                attribution: '© Esri'
+                attribution: '© Esri',
+                updateWhenZooming: false,
+                updateWhenIdle: true,
+                updateInterval: 200,
+                keepBuffer: 4
             });
 
             layers.terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
                 maxZoom: 17,
-                attribution: '© OpenTopoMap'
+                attribution: '© OpenTopoMap',
+                updateWhenZooming: false,
+                updateWhenIdle: true,
+                updateInterval: 200,
+                keepBuffer: 4
             });
 
             layers.osm.addTo(map);
